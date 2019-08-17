@@ -6,7 +6,7 @@ import { Container, inject, injectable, named } from "../../src/inversify";
 
 describe("Named default", () => {
 
-    it("Should be able to inject a default to avoid ambiguous binding exceptions", () => {
+    it("Should be able to inject a default to avoid ambiguous binding exceptions", async () => {
 
         const TYPES = {
             Warrior: "Warrior",
@@ -74,8 +74,8 @@ describe("Named default", () => {
         container.bind<Weapon>(TYPES.Weapon).to(Shuriken).whenTargetNamed(TAG.throwable);
         container.bind<Weapon>(TYPES.Weapon).to(Katana).whenTargetIsDefault();
 
-        const ninja = container.getNamed<Warrior>(TYPES.Warrior, TAG.chinese);
-        const samurai = container.getNamed<Warrior>(TYPES.Warrior, TAG.japanese);
+        const ninja = await container.getNamed<Warrior>(TYPES.Warrior, TAG.chinese);
+        const samurai = await container.getNamed<Warrior>(TYPES.Warrior, TAG.japanese);
 
         expect(ninja.name).to.eql("Ninja");
         expect(ninja.weapon.name).to.eql("Shuriken");
@@ -84,7 +84,7 @@ describe("Named default", () => {
 
     });
 
-    it("Should be able to select a default to avoid ambiguous binding exceptions", () => {
+    it("Should be able to select a default to avoid ambiguous binding exceptions", async () => {
 
         const TYPES = {
             Weapon: "Weapon"
@@ -118,8 +118,8 @@ describe("Named default", () => {
         container.bind<Weapon>(TYPES.Weapon).to(Shuriken).whenTargetNamed(TAG.throwable);
         container.bind<Weapon>(TYPES.Weapon).to(Katana).inSingletonScope().whenTargetIsDefault();
 
-        const defaultWeapon = container.get<Weapon>(TYPES.Weapon);
-        const throwableWeapon = container.getNamed<Weapon>(TYPES.Weapon, TAG.throwable);
+        const defaultWeapon = await container.get<Weapon>(TYPES.Weapon);
+        const throwableWeapon = await container.getNamed<Weapon>(TYPES.Weapon, TAG.throwable);
 
         expect(defaultWeapon.name).eql("Katana");
         expect(throwableWeapon.name).eql("Shuriken");

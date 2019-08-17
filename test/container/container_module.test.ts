@@ -51,7 +51,7 @@ describe("ContainerModule", () => {
 
   });
 
-  it("Should be able to override a binding using rebind within a container module", () => {
+  it("Should be able to override a binding using rebind within a container module", async () => {
 
     const TYPES = {
         someType: "someType"
@@ -82,12 +82,12 @@ describe("ContainerModule", () => {
     );
 
     container.load(module1);
-    const values1 = container.getAll(TYPES.someType);
+    const values1 = await container.getAll(TYPES.someType);
     expect(values1[0]).to.eq(1);
     expect(values1[1]).to.eq(2);
 
     container.load(module2);
-    const values2 = container.getAll(TYPES.someType);
+    const values2 = await container.getAll(TYPES.someType);
     expect(values2[0]).to.eq(3);
     expect(values2[1]).to.eq(undefined);
 

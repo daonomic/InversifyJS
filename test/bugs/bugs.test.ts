@@ -222,10 +222,10 @@ describe("Bugs", () => {
 
         const container = new Container();
 
-        container.bind<number>("transient_random").toDynamicValue((context: interfaces.Context) =>
+        container.bind<number>("transient_random").toDynamicValue(async (context: interfaces.Context) =>
             Math.random()).inTransientScope();
 
-        container.bind<number>("singleton_random").toDynamicValue((context: interfaces.Context) =>
+        container.bind<number>("singleton_random").toDynamicValue(async (context: interfaces.Context) =>
             Math.random()).inSingletonScope();
 
         const a = container.get<number>("transient_random");
@@ -240,7 +240,7 @@ describe("Bugs", () => {
 
     });
 
-    it("Should be able to use an abstract class as the serviceIdentifier", () => {
+    it("Should be able to use an abstract class as the serviceIdentifier", async () => {
 
         @injectable()
         abstract class Animal {
@@ -279,13 +279,13 @@ describe("Bugs", () => {
         container.bind<Animal>(Animal).to(Snake);
         container.bind<Jungle>(Jungle).to(Jungle);
 
-        const jungle = container.get(Jungle);
+        const jungle = await container.get(Jungle);
         expect(jungle.animal.makeSound("zzz")).to.eql("ssssszzz");
         expect(jungle.animal.move(5)).to.eql("Slithering... Snake moved 5m");
 
     });
 
-    it("Should be able to identify is a target is tagged", () => {
+    it("Should be able to identify is a target is tagged", async () => {
 
         const TYPES = {
             Dependency1: Symbol.for("Dependency1"),
@@ -429,7 +429,7 @@ describe("Bugs", () => {
         }
 
         container.applyMiddleware(logger);
-        container.get<Test>(TYPES.Test);
+        await container.get<Test>(TYPES.Test);
 
     });
 
@@ -445,7 +445,7 @@ describe("Bugs", () => {
 
     });
 
-    it("Should be able to get all the available bindings for a service identifier", () => {
+    it("Should be able to get all the available bindings for a service identifier", async () => {
 
         const controllerId = "SomeControllerID";
         const tagA = "A";
@@ -476,22 +476,22 @@ describe("Bugs", () => {
         container.bind(controllerId).to(AppController).whenTargetNamed(tagA);
         container.bind(controllerId).to(AppController2).whenTargetNamed(tagB);
 
-        function wrongNamedBinding() { container.getAllNamed<Controller>(controllerId, "Wrong"); }
+        async function wrongNamedBinding() { await container.getAllNamed<Controller>(controllerId, "Wrong"); }
         expect(wrongNamedBinding).to.throw();
 
-        const appControllerNamedRight = container.getAllNamed<Controller>(controllerId, tagA);
+        const appControllerNamedRight = await container.getAllNamed<Controller>(controllerId, tagA);
         expect(appControllerNamedRight.length).to.eql(1, "getAllNamed");
         expect(appControllerNamedRight[0].name).to.eql("AppController");
 
-        function wrongTaggedBinding() { container.getAllTagged<Controller>(controllerId, "Wrong", "Wrong"); }
+        async function wrongTaggedBinding() { await container.getAllTagged<Controller>(controllerId, "Wrong", "Wrong"); }
         expect(wrongTaggedBinding).to.throw();
 
-        const appControllerTaggedRight = container.getAllTagged<Controller>(controllerId, METADATA_KEY.NAMED_TAG, tagB);
+        const appControllerTaggedRight = await container.getAllTagged<Controller>(controllerId, METADATA_KEY.NAMED_TAG, tagB);
         expect(appControllerTaggedRight.length).to.eql(1, "getAllTagged");
         expect(appControllerTaggedRight[0].name).to.eql("AppController2");
 
-        const getAppController = () => {
-            const matches = container.getAll<Controller>(controllerId);
+        const getAppController = async () => {
+            const matches = await container.getAll<Controller>(controllerId);
             expect(matches.length).to.eql(2);
             expect(matches[0].name).to.eql("AppController");
             expect(matches[1].name).to.eql("AppController2");
@@ -537,7 +537,7 @@ describe("Bugs", () => {
         expect(throws).to.throw(ERROR_MSGS.INVALID_TO_SELF_VALUE);
     });
 
-    it("Should generate correct metadata when the spread operator is used", () => {
+    it("Should generate correct metadata when the spread operator is used", async () => {
 
         const BAR = Symbol.for("BAR");
         const FOO = Symbol.for("FOO");
@@ -568,14 +568,14 @@ describe("Bugs", () => {
         container.bind<Bar>(BAR).toConstantValue({ name: "bar1" });
         container.bind<Bar>(BAR).toConstantValue({ name: "bar2" });
         container.bind<Foo>(FOO).to(Foo);
-        const foo = container.get<Foo>(FOO);
+        const foo = await container.get<Foo>(FOO);
         expect(foo.bar.length).to.eql(2);
         expect(foo.bar[0].name).to.eql("bar1");
         expect(foo.bar[1].name).to.eql("bar2");
 
     });
 
-    it("Should be able to inject into an abstract class", () => {
+    it("Should be able to inject into an abstract class", async () => {
 
         interface Weapon { }
 
@@ -616,9 +616,9 @@ describe("Bugs", () => {
         container.bind<BaseSoldier>("BaseSoldier").to(Knight).whenTargetNamed("knight");
         container.bind<BaseSoldier>("BaseSoldier").to(Archer).whenTargetNamed("archer");
 
-        const soldier = container.getNamed<BaseSoldier>("BaseSoldier", "default");
-        const knight = container.getNamed<BaseSoldier>("BaseSoldier", "knight");
-        const archer = container.getNamed<BaseSoldier>("BaseSoldier", "archer");
+        const soldier = await container.getNamed<BaseSoldier>("BaseSoldier", "default");
+        const knight = await container.getNamed<BaseSoldier>("BaseSoldier", "knight");
+        const archer = await container.getNamed<BaseSoldier>("BaseSoldier", "archer");
 
         expect(soldier.weapon instanceof DefaultWeapon).to.eql(true);
         expect(knight.weapon instanceof Sword).to.eql(true);
@@ -626,7 +626,7 @@ describe("Bugs", () => {
 
     });
 
-    it("Should be able apply inject to property shortcut", () => {
+    it("Should be able apply inject to property shortcut", async () => {
 
         interface Weapon {
             use(): string;
@@ -653,12 +653,12 @@ describe("Bugs", () => {
         container.bind<Weapon>("Weapon").to(Katana).whenTargetNamed("sword");
         container.bind<Ninja>(Ninja).toSelf();
 
-        const ninja = container.get<Ninja>(Ninja);
+        const ninja = await container.get<Ninja>(Ninja);
         expect(ninja.fight()).eql("Used Katana!");
 
     });
 
-    it("Should be able to inject into abstract base class without decorators", () => {
+    it("Should be able to inject into abstract base class without decorators", async () => {
 
         const TYPES = {
             Warrior: "Warrior",
@@ -733,7 +733,7 @@ describe("Bugs", () => {
         container.bind<Weapon>(TYPES.Weapon).to(Katana).whenTargetTagged(TAGS.Priority, TAGS.Primary);
         container.bind<Weapon>(TYPES.Weapon).to(Shuriken).whenTargetTagged(TAGS.Priority, TAGS.Secondary);
 
-        const samurai = container.get<Samurai>(TYPES.Warrior);
+        const samurai = await container.get<Samurai>(TYPES.Warrior);
         expect(samurai.name).to.eql("Samurai");
         expect(samurai.secondaryWeapon).not.to.eql(undefined);
         expect(samurai.secondaryWeapon.name).to.eql("Shuriken");
@@ -741,7 +741,7 @@ describe("Bugs", () => {
         expect(samurai.primaryWeapon.name).to.eql("Katana");
     });
 
-    it("Should be able to combine unmanaged and managed injections ", () => {
+    it("Should be able to combine unmanaged and managed injections ", async () => {
 
         interface Model<T> {
             instance: T;
@@ -807,7 +807,7 @@ describe("Bugs", () => {
         container.bind<TypedRepo>(TypedRepo).toSelf();
         container.bind<TypedBL>("TypedBL").to(TypedBL);
 
-        const typedBL = container.get<TypedBL>("TypedBL");
+        const typedBL = await container.get<TypedBL>("TypedBL");
         expect(typedBL.repository.model.instance.name).to.eq(new Type().name);
 
     });

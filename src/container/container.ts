@@ -237,33 +237,34 @@ class Container implements interfaces.Container {
     // Resolves a dependency by its runtime identifier
     // The runtime identifier must be associated with only one binding
     // use getAll when the runtime identifier is associated with multiple bindings
-    public get<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>): T {
+    public async get<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>): Promise<T> {
         return this._get<T>(false, false, TargetTypeEnum.Variable, serviceIdentifier) as T;
     }
 
-    public getTagged<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, key: string | number | symbol, value: any): T {
+    public async getTagged<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, key: string | number | symbol, value: any): Promise<T> {
         return this._get<T>(false, false, TargetTypeEnum.Variable, serviceIdentifier, key, value) as T;
     }
 
-    public getNamed<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, named: string | number | symbol): T {
+    public async getNamed<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, named: string | number | symbol): Promise<T> {
         return this.getTagged<T>(serviceIdentifier, METADATA_KEY.NAMED_TAG, named);
     }
 
     // Resolves a dependency by its runtime identifier
     // The runtime identifier can be associated with one or multiple bindings
-    public getAll<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>): T[] {
+    public async getAll<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>): Promise<T[]> {
         return this._get<T>(true, true, TargetTypeEnum.Variable, serviceIdentifier) as T[];
     }
 
-    public getAllTagged<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, key: string | number | symbol, value: any): T[] {
+    public async getAllTagged<T>(
+        serviceIdentifier: interfaces.ServiceIdentifier<T>, key: string | number | symbol, value: any): Promise<T[]> {
         return this._get<T>(false, true, TargetTypeEnum.Variable, serviceIdentifier, key, value) as T[];
     }
 
-    public getAllNamed<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, named: string | number | symbol): T[] {
+    public async getAllNamed<T>(serviceIdentifier: interfaces.ServiceIdentifier<T>, named: string | number | symbol): Promise<T[]> {
         return this.getAllTagged<T>(serviceIdentifier, METADATA_KEY.NAMED_TAG, named);
     }
 
-    public resolve<T>(constructorFunction: interfaces.Newable<T>) {
+    public async resolve<T>(constructorFunction: interfaces.Newable<T>): Promise<T> {
         const tempContainer = this.createChild();
         tempContainer.bind<T>(constructorFunction).toSelf();
         return tempContainer.get<T>(constructorFunction);

@@ -10,7 +10,6 @@ const BindingTypeEnum: interfaces.BindingTypeEnum = {
     ConstantValue: "ConstantValue",
     Constructor: "Constructor",
     DynamicValue: "DynamicValue",
-    Factory: "Factory",
     Function: "Function",
     Instance: "Instance",
     Invalid: "Invalid",

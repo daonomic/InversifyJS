@@ -398,7 +398,7 @@ describe("Container", () => {
         expect(secondChildContainer.get(weaponIdentifier)).to.be.instanceOf(DivineRapier);
     });
 
-    it("Should be able to resolve named multi-injection", () => {
+    it("Should be able to resolve named multi-injection", async () => {
 
         interface Intl {
             hello?: string;
@@ -411,19 +411,19 @@ describe("Container", () => {
         container.bind<Intl>("Intl").toConstantValue({ hello: "hola" }).whenTargetNamed("es");
         container.bind<Intl>("Intl").toConstantValue({ goodbye: "adios" }).whenTargetNamed("es");
 
-        const fr = container.getAllNamed<Intl>("Intl", "fr");
+        const fr = await container.getAllNamed<Intl>("Intl", "fr");
         expect(fr.length).to.equal(2);
         expect(fr[0].hello).to.equal("bonjour");
         expect(fr[1].goodbye).to.equal("au revoir");
 
-        const es = container.getAllNamed<Intl>("Intl", "es");
+        const es = await container.getAllNamed<Intl>("Intl", "es");
         expect(es.length).to.equal(2);
         expect(es[0].hello).to.equal("hola");
         expect(es[1].goodbye).to.equal("adios");
 
     });
 
-    it("Should be able to resolve tagged multi-injection", () => {
+    it("Should be able to resolve tagged multi-injection", async () => {
 
         interface Intl {
             hello?: string;
@@ -436,19 +436,19 @@ describe("Container", () => {
         container.bind<Intl>("Intl").toConstantValue({ hello: "hola" }).whenTargetTagged("lang", "es");
         container.bind<Intl>("Intl").toConstantValue({ goodbye: "adios" }).whenTargetTagged("lang", "es");
 
-        const fr = container.getAllTagged<Intl>("Intl", "lang", "fr");
+        const fr = await container.getAllTagged<Intl>("Intl", "lang", "fr");
         expect(fr.length).to.equal(2);
         expect(fr[0].hello).to.equal("bonjour");
         expect(fr[1].goodbye).to.equal("au revoir");
 
-        const es = container.getAllTagged<Intl>("Intl", "lang", "es");
+        const es = await container.getAllTagged<Intl>("Intl", "lang", "es");
         expect(es.length).to.equal(2);
         expect(es[0].hello).to.equal("hola");
         expect(es[1].goodbye).to.equal("adios");
 
     });
 
-    it("Should be able configure the default scope at a global level", () => {
+    it("Should be able configure the default scope at a global level", async () => {
 
         interface Warrior {
             health: number;
@@ -473,12 +473,12 @@ describe("Container", () => {
         const container1 = new Container();
         container1.bind<Warrior>(TYPES.Warrior).to(Ninja);
 
-        const transientNinja1 = container1.get<Warrior>(TYPES.Warrior);
+        const transientNinja1 = await container1.get<Warrior>(TYPES.Warrior);
         expect(transientNinja1.health).to.equal(100);
         transientNinja1.takeHit(10);
         expect(transientNinja1.health).to.equal(90);
 
-        const transientNinja2 = container1.get<Warrior>(TYPES.Warrior);
+        const transientNinja2 = await container1.get<Warrior>(TYPES.Warrior);
         expect(transientNinja2.health).to.equal(100);
         transientNinja2.takeHit(10);
         expect(transientNinja2.health).to.equal(90);
@@ -486,19 +486,19 @@ describe("Container", () => {
         const container2 = new Container({ defaultScope: BindingScopeEnum.Singleton });
         container2.bind<Warrior>(TYPES.Warrior).to(Ninja);
 
-        const singletonNinja1 = container2.get<Warrior>(TYPES.Warrior);
+        const singletonNinja1 = await container2.get<Warrior>(TYPES.Warrior);
         expect(singletonNinja1.health).to.equal(100);
         singletonNinja1.takeHit(10);
         expect(singletonNinja1.health).to.equal(90);
 
-        const singletonNinja2 = container2.get<Warrior>(TYPES.Warrior);
+        const singletonNinja2 = await container2.get<Warrior>(TYPES.Warrior);
         expect(singletonNinja2.health).to.equal(90);
         singletonNinja2.takeHit(10);
         expect(singletonNinja2.health).to.equal(80);
 
     });
 
-    it("Should be able to configure automatic binding for @injectable() decorated classes", () => {
+    it("Should be able to configure automatic binding for @injectable() decorated classes", async () => {
 
         @injectable()
         class Katana {}
@@ -514,49 +514,49 @@ describe("Container", () => {
         class Samurai {}
 
         const container1 = new Container({autoBindInjectable: true});
-        const katana1 = container1.get(Katana);
-        const ninja1 = container1.get(Ninja);
+        const katana1 = await container1.get(Katana);
+        const ninja1 = await container1.get(Ninja);
         expect(katana1).to.be.an.instanceof(Katana);
         expect(katana1).to.not.equal(container1.get(Katana));
         expect(ninja1).to.be.an.instanceof(Ninja);
         expect(ninja1).to.not.equal(container1.get(Ninja));
         expect(ninja1.weapon).to.be.an.instanceof(Katana);
-        expect(ninja1.weapon).to.not.equal(container1.get(Ninja).weapon);
+        expect(ninja1.weapon).to.not.equal((await container1.get(Ninja)).weapon);
         expect(ninja1.weapon).to.not.equal(katana1);
 
         const container2 = new Container({defaultScope: BindingScopeEnum.Singleton, autoBindInjectable: true});
-        const katana2 = container2.get(Katana);
-        const ninja2 = container2.get(Ninja);
+        const katana2 = await container2.get(Katana);
+        const ninja2 = await container2.get(Ninja);
         expect(katana2).to.be.an.instanceof(Katana);
         expect(katana2).to.equal(container2.get(Katana));
         expect(ninja2).to.be.an.instanceof(Ninja);
         expect(ninja2).to.equal(container2.get(Ninja));
         expect(ninja2.weapon).to.be.an.instanceof(Katana);
-        expect(ninja2.weapon).to.equal(container2.get(Ninja).weapon);
+        expect(ninja2.weapon).to.equal((await container2.get(Ninja)).weapon);
         expect(ninja2.weapon).to.equal(katana2);
 
         const container3 = new Container({autoBindInjectable: true});
         container3.bind(Katana).toSelf().inSingletonScope();
-        const katana3 = container3.get(Katana);
-        const ninja3 = container3.get(Ninja);
+        const katana3 = await container3.get(Katana);
+        const ninja3 = await container3.get(Ninja);
         expect(katana3).to.be.an.instanceof(Katana);
         expect(katana3).to.equal(container3.get(Katana));
         expect(ninja3).to.be.an.instanceof(Ninja);
         expect(ninja3).to.not.equal(container3.get(Ninja));
         expect(ninja3.weapon).to.be.an.instanceof(Katana);
-        expect(ninja3.weapon).to.equal(container3.get(Ninja).weapon);
+        expect(ninja3.weapon).to.equal((await container3.get(Ninja)).weapon);
         expect(ninja3.weapon).to.equal(katana3);
 
         const container4 = new Container({autoBindInjectable: true});
         container4.bind(Katana).to(Shuriken);
-        const katana4 = container4.get(Katana);
-        const ninja4 = container4.get(Ninja);
+        const katana4 = await container4.get(Katana);
+        const ninja4 = await container4.get(Ninja);
         expect(katana4).to.be.an.instanceof(Shuriken);
         expect(katana4).to.not.equal(container4.get(Katana));
         expect(ninja4).to.be.an.instanceof(Ninja);
         expect(ninja4).to.not.equal(container4.get(Ninja));
         expect(ninja4.weapon).to.be.an.instanceof(Shuriken);
-        expect(ninja4.weapon).to.not.equal(container4.get(Ninja).weapon);
+        expect(ninja4.weapon).to.not.equal((await container4.get(Ninja)).weapon);
         expect(ninja4.weapon).to.not.equal(katana4);
 
         const container5 = new Container({autoBindInjectable: true});
@@ -580,7 +580,7 @@ describe("Container", () => {
 
     });
 
-    it("Should be able to merge multiple containers", () => {
+    it("Should be able to merge multiple containers", async () => {
 
         @injectable()
         class Ninja {
@@ -621,10 +621,10 @@ describe("Container", () => {
         japanExpansionContainer.bind<Katana>(JAPAN_EXPANSION_TYPES.Katana).to(Katana);
 
         const gameContainer = Container.merge(chinaExpansionContainer, japanExpansionContainer);
-        expect(gameContainer.get<Ninja>(CHINA_EXPANSION_TYPES.Ninja).name).to.equal("Ninja");
-        expect(gameContainer.get<Shuriken>(CHINA_EXPANSION_TYPES.Shuriken).name).to.equal("Shuriken");
-        expect(gameContainer.get<Samurai>(JAPAN_EXPANSION_TYPES.Samurai).name).to.equal("Samurai");
-        expect(gameContainer.get<Katana>(JAPAN_EXPANSION_TYPES.Katana).name).to.equal("Katana");
+        expect((await gameContainer.get<Ninja>(CHINA_EXPANSION_TYPES.Ninja)).name).to.equal("Ninja");
+        expect((await gameContainer.get<Shuriken>(CHINA_EXPANSION_TYPES.Shuriken)).name).to.equal("Shuriken");
+        expect((await gameContainer.get<Samurai>(JAPAN_EXPANSION_TYPES.Samurai)).name).to.equal("Samurai");
+        expect((await gameContainer.get<Katana>(JAPAN_EXPANSION_TYPES.Katana)).name).to.equal("Katana");
 
     });
 
@@ -783,7 +783,7 @@ describe("Container", () => {
 
     });
 
-    it("Should be able to override a binding using rebind", () => {
+    it("Should be able to override a binding using rebind", async () => {
 
         const TYPES = {
             someType: "someType"
@@ -793,12 +793,12 @@ describe("Container", () => {
         container.bind<number>(TYPES.someType).toConstantValue(1);
         container.bind<number>(TYPES.someType).toConstantValue(2);
 
-        const values1 = container.getAll(TYPES.someType);
+        const values1 = await container.getAll(TYPES.someType);
         expect(values1[0]).to.eq(1);
         expect(values1[1]).to.eq(2);
 
         container.rebind<number>(TYPES.someType).toConstantValue(3);
-        const values2 = container.getAll(TYPES.someType);
+        const values2 = await container.getAll(TYPES.someType);
         expect(values2[0]).to.eq(3);
         expect(values2[1]).to.eq(undefined);
 

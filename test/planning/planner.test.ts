@@ -8,7 +8,6 @@ import { targetName } from "../../src/annotation/target_name";
 import * as ERROR_MSGS from "../../src/constants/error_msgs";
 import { TargetTypeEnum } from "../../src/constants/literal_types";
 import { Container } from "../../src/container/container";
-import { interfaces } from "../../src/interfaces/interfaces";
 import { MetadataReader } from "../../src/planning/metadata_reader";
 import { plan } from "../../src/planning/planner";
 
@@ -179,81 +178,6 @@ describe("Planner", () => {
         expect(throwErrorFunction).to.throw(
             `${ERROR_MSGS.CIRCULAR_DEPENDENCY} A --> C --> D --> A`
         );
-
-    });
-
-    it("Should only plan sub-dependencies when binding type is BindingType.Instance", () => {
-
-        interface KatanaBlade { }
-
-        @injectable()
-        class KatanaBlade implements KatanaBlade { }
-
-        interface KatanaHandler { }
-
-        @injectable()
-        class KatanaHandler implements KatanaHandler { }
-
-        interface Katana { }
-
-        @injectable()
-        class Katana implements Katana {
-            public handler: KatanaHandler;
-            public blade: KatanaBlade;
-            public constructor(
-                @inject("KatanaHandler") @targetName("handler") handler: KatanaHandler,
-                @inject("KatanaBlade") @targetName("blade") blade: KatanaBlade
-            ) {
-                this.handler = handler;
-                this.blade = blade;
-            }
-        }
-
-        interface Shuriken { }
-
-        @injectable()
-        class Shuriken implements Shuriken { }
-
-        interface Ninja { }
-
-        @injectable()
-        class Ninja implements Ninja {
-            public katanaFactory: interfaces.Factory<Katana>;
-            public shuriken: Shuriken;
-            public constructor(
-                @inject("Factory<Katana>") @targetName("katanaFactory") katanaFactory: interfaces.Factory<Katana>,
-                @inject("Shuriken") @targetName("shuriken") shuriken: Shuriken
-            ) {
-                this.katanaFactory = katanaFactory;
-                this.shuriken = shuriken;
-            }
-        }
-
-        const ninjaId = "Ninja";
-        const shurikenId = "Shuriken";
-        const katanaId = "Katana";
-        const katanaHandlerId = "KatanaHandler";
-        const katanaBladeId = "KatanaBlade";
-        const katanaFactoryId = "Factory<Katana>";
-
-        const container = new Container();
-        container.bind<Ninja>(ninjaId).to(Ninja);
-        container.bind<Shuriken>(shurikenId).to(Shuriken);
-        container.bind<Katana>(katanaBladeId).to(Katana);
-        container.bind<KatanaBlade>(katanaBladeId).to(KatanaBlade);
-        container.bind<KatanaHandler>(katanaHandlerId).to(KatanaHandler);
-        container.bind<interfaces.Factory<Katana>>(katanaFactoryId).toFactory<Katana>((context: interfaces.Context) =>
-            () =>
-                context.container.get<Katana>(katanaId));
-
-        const actualPlan = plan(new MetadataReader(), container, false, TargetTypeEnum.Variable, ninjaId).plan;
-
-        expect(actualPlan.rootRequest.serviceIdentifier).eql(ninjaId);
-        expect(actualPlan.rootRequest.childRequests[0].serviceIdentifier).eql(katanaFactoryId);
-        expect(actualPlan.rootRequest.childRequests[0].childRequests.length).eql(0); // IMPORTANT!
-        expect(actualPlan.rootRequest.childRequests[1].serviceIdentifier).eql(shurikenId);
-        expect(actualPlan.rootRequest.childRequests[1].childRequests.length).eql(0);
-        expect(actualPlan.rootRequest.childRequests[2]).eql(undefined);
 
     });
 

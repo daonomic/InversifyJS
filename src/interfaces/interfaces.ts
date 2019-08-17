@@ -17,7 +17,6 @@ namespace interfaces {
         ConstantValue: interfaces.BindingType;
         Constructor: interfaces.BindingType;
         DynamicValue: interfaces.BindingType;
-        Factory: interfaces.BindingType;
         Function: interfaces.BindingType;
         Instance: interfaces.BindingType;
         Invalid: interfaces.BindingType;
@@ -48,19 +47,14 @@ namespace interfaces {
         activated: boolean;
         serviceIdentifier: ServiceIdentifier<T>;
         constraint: ConstraintFunction;
-        dynamicValue: ((context: interfaces.Context) => T) | null;
+        dynamicValue: ((context: interfaces.Context) => Promise<T>) | null;
         scope: BindingScope;
         type: BindingType;
         implementationType: Newable<T> | null;
-        factory: FactoryCreator<any> | null;
         provider: ProviderCreator<any> | null;
         onActivation: ((context: interfaces.Context, injectable: T) => T) | null;
         cache: T | null;
     }
-
-    export type Factory<T> = (...args: any[]) => (((...args: any[]) => T) | T);
-
-    export type FactoryCreator<T> = (context: Context) => Factory<T>;
 
     export type Provider<T> = (...args: any[]) => (((...args: any[]) => Promise<T>) | Promise<T>);
 
@@ -170,13 +164,13 @@ namespace interfaces {
         isBound(serviceIdentifier: ServiceIdentifier<any>): boolean;
         isBoundNamed(serviceIdentifier: ServiceIdentifier<any>, named: string | number | symbol): boolean;
         isBoundTagged(serviceIdentifier: ServiceIdentifier<any>, key: string | number | symbol, value: any): boolean;
-        get<T>(serviceIdentifier: ServiceIdentifier<T>): T;
-        getNamed<T>(serviceIdentifier: ServiceIdentifier<T>, named: string | number | symbol): T;
-        getTagged<T>(serviceIdentifier: ServiceIdentifier<T>, key: string | number | symbol, value: any): T;
-        getAll<T>(serviceIdentifier: ServiceIdentifier<T>): T[];
-        getAllTagged<T>(serviceIdentifier: ServiceIdentifier<T>, key: string | number | symbol, value: any): T[];
-        getAllNamed<T>(serviceIdentifier: ServiceIdentifier<T>, named: string | number | symbol): T[];
-        resolve<T>(constructorFunction: interfaces.Newable<T>): T;
+        get<T>(serviceIdentifier: ServiceIdentifier<T>): Promise<T>;
+        getNamed<T>(serviceIdentifier: ServiceIdentifier<T>, named: string | number | symbol): Promise<T>;
+        getTagged<T>(serviceIdentifier: ServiceIdentifier<T>, key: string | number | symbol, value: any): Promise<T>;
+        getAll<T>(serviceIdentifier: ServiceIdentifier<T>): Promise<T[]>;
+        getAllTagged<T>(serviceIdentifier: ServiceIdentifier<T>, key: string | number | symbol, value: any): Promise<T[]>;
+        getAllNamed<T>(serviceIdentifier: ServiceIdentifier<T>, named: string | number | symbol): Promise<T[]>;
+        resolve<T>(constructorFunction: interfaces.Newable<T>): Promise<T>;
         load(...modules: ContainerModule[]): void;
         loadAsync(...modules: AsyncContainerModule[]): Promise<void>;
         unload(...modules: ContainerModule[]): void;
@@ -271,11 +265,9 @@ namespace interfaces {
         to(constructor: new (...args: any[]) => T): BindingInWhenOnSyntax<T>;
         toSelf(): BindingInWhenOnSyntax<T>;
         toConstantValue(value: T): BindingWhenOnSyntax<T>;
-        toDynamicValue(func: (context: Context) => T): BindingInWhenOnSyntax<T>;
+        toDynamicValue(func: (context: Context) => Promise<T>): BindingInWhenOnSyntax<T>;
         toConstructor<T2>(constructor: Newable<T2>): BindingWhenOnSyntax<T>;
-        toFactory<T2>(factory: FactoryCreator<T2>): BindingWhenOnSyntax<T>;
         toFunction(func: T): BindingWhenOnSyntax<T>;
-        toAutoFactory<T2>(serviceIdentifier: ServiceIdentifier<T2>): BindingWhenOnSyntax<T>;
         toProvider<T2>(provider: ProviderCreator<T2>): BindingWhenOnSyntax<T>;
         toService(service: ServiceIdentifier<T>): void;
     }

@@ -80,7 +80,7 @@ describe("Custom Metadata Reader", () => {
 
     }
 
-    it("Should be able to use custom constructor injection metadata", () => {
+    it("Should be able to use custom constructor injection metadata", async () => {
 
         interface Ninja {
             fight(): string;
@@ -139,14 +139,14 @@ describe("Custom Metadata Reader", () => {
         container.bind<Katana>("Katana").to(Katana);
         container.bind<Shuriken>("Shuriken").to(Shuriken);
 
-        const ninja = container.get<Ninja>("Ninja");
+        const ninja = await container.get<Ninja>("Ninja");
 
         expect(ninja.fight()).eql("cut!");
         expect(ninja.sneak()).eql("hit!");
 
     });
 
-    it("Should be able to use custom prop injection metadata", () => {
+    it("Should be able to use custom prop injection metadata", async () => {
 
         interface Ninja {
             fight(): string;
@@ -203,14 +203,14 @@ describe("Custom Metadata Reader", () => {
         container.bind<Katana>("Katana").to(Katana);
         container.bind<Shuriken>("Shuriken").to(Shuriken);
 
-        const ninja = container.get<Ninja>("Ninja");
+        const ninja = await container.get<Ninja>("Ninja");
 
         expect(ninja.fight()).eql("cut!");
         expect(ninja.sneak()).eql("hit!");
 
     });
 
-    it("Should be able to use extend the default metadata reader", () => {
+    it("Should be able to use extend the default metadata reader", async () => {
 
         const constructorMetadataLog: interfaces.ConstructorMetadata[] = [];
         const propertyMetadataLog: interfaces.MetadataMap[] = [];
@@ -281,7 +281,7 @@ describe("Custom Metadata Reader", () => {
         container.bind<Katana>("Katana").to(Katana);
         container.bind<Shuriken>("Shuriken").to(Shuriken);
 
-        const ninja = container.get<Ninja>("Ninja");
+        const ninja = await container.get<Ninja>("Ninja");
 
         expect(ninja.fight()).eql("cut!");
         expect(ninja.sneak()).eql("hit!");

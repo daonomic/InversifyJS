@@ -3,7 +3,7 @@ import { Container, injectable } from "../../src/inversify";
 
 describe("Container.prototype.resolve", () => {
 
-    it("Should be able to resolve a class that has not binded", () => {
+    it("Should be able to resolve a class that has not binded", async () => {
 
         @injectable()
         class Katana {
@@ -27,7 +27,7 @@ describe("Container.prototype.resolve", () => {
         const tryGet = () => container.get(Ninja);
         expect(tryGet).to.throw("No matching bindings found for serviceIdentifier: Ninja");
 
-        const ninja = container.resolve(Ninja);
+        const ninja = await container.resolve(Ninja);
         expect(ninja.fight()).to.eql("cut!");
 
     });

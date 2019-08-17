@@ -304,7 +304,7 @@ describe("Resolve", () => {
 
   });
 
-  it("Should be able to resolve BindingType.DynamicValue bindings", () => {
+  it("Should be able to resolve BindingType.DynamicValue bindings", async () => {
 
     interface UseDate {
         doSomething(): Date;
@@ -323,17 +323,17 @@ describe("Resolve", () => {
 
     const container = new Container();
     container.bind<UseDate>("UseDate").to(UseDate);
-    container.bind<Date>("Date").toDynamicValue((context: interfaces.Context) => new Date());
+    container.bind<Date>("Date").toDynamicValue(async (context: interfaces.Context) => new Date());
 
-    const subject1 = container.get<UseDate>("UseDate");
-    const subject2 = container.get<UseDate>("UseDate");
+    const subject1 = await container.get<UseDate>("UseDate");
+    const subject2 = await container.get<UseDate>("UseDate");
     expect(subject1.doSomething() === subject2.doSomething()).eql(false);
 
     container.unbind("Date");
     container.bind<Date>("Date").toConstantValue(new Date());
 
-    const subject3 = container.get<UseDate>("UseDate");
-    const subject4 = container.get<UseDate>("UseDate");
+    const subject3 = await container.get<UseDate>("UseDate");
+    const subject4 = await container.get<UseDate>("UseDate");
     expect(subject3.doSomething() === subject4.doSomething()).eql(true);
 
   });
@@ -403,172 +403,6 @@ describe("Resolve", () => {
       container.bind<Shuriken>(shurikenId).to(Shuriken);
       container.bind<Katana>(katanaId).to(Katana);
       container.bind<interfaces.Newable<Katana>>(newableKatanaId).toConstructor<Katana>(Katana);  // IMPORTANT!
-
-      const context = plan(new MetadataReader(), container, false, TargetTypeEnum.Variable, ninjaId);
-      const ninja = resolve<Ninja>(context);
-
-      expect(ninja instanceof Ninja).eql(true);
-      expect(ninja.katana instanceof Katana).eql(true);
-      expect(ninja.katana.handler instanceof KatanaHandler).eql(true);
-      expect(ninja.katana.blade instanceof KatanaBlade).eql(true);
-      expect(ninja.shuriken instanceof Shuriken).eql(true);
-
-  });
-
-  it("Should be able to resolve BindingType.Factory bindings", () => {
-
-      const ninjaId = "Ninja";
-      const shurikenId = "Shuriken";
-      const swordFactoryId = "Factory<Sword>";
-      const katanaId = "Katana";
-      const handlerId = "Handler";
-      const bladeId = "Blade";
-
-      interface Blade {}
-
-      @injectable()
-      class KatanaBlade implements Blade {}
-
-      interface Handler {}
-
-      @injectable()
-      class KatanaHandler implements Handler {}
-
-      interface Sword {
-          handler: Handler;
-          blade: Blade;
-      }
-
-      type SwordFactory = () => Sword;
-
-      @injectable()
-      class Katana implements Sword {
-          public handler: Handler;
-          public blade: Blade;
-          public constructor(
-              @inject(handlerId) @targetName("handler") handler: Handler,
-              @inject(bladeId) @targetName("blade") blade: Blade
-          ) {
-              this.handler = handler;
-              this.blade = blade;
-          }
-      }
-
-      interface Shuriken {}
-
-      @injectable()
-      class Shuriken implements Shuriken {}
-
-      interface Warrior {
-          katana: Katana;
-          shuriken: Shuriken;
-      }
-
-      @injectable()
-      class Ninja implements Warrior {
-          public katana: Katana;
-          public shuriken: Shuriken;
-          public constructor(
-              @inject(swordFactoryId) @targetName("makeKatana") makeKatana: SwordFactory,
-              @inject(shurikenId) @targetName("shuriken") shuriken: Shuriken
-          ) {
-              this.katana = makeKatana(); // IMPORTANT!
-              this.shuriken = shuriken;
-          }
-      }
-
-      const container = new Container();
-      container.bind<Ninja>(ninjaId).to(Ninja);
-      container.bind<Shuriken>(shurikenId).to(Shuriken);
-      container.bind<Katana>(katanaId).to(Katana);
-      container.bind<KatanaBlade>(bladeId).to(KatanaBlade);
-      container.bind<KatanaHandler>(handlerId).to(KatanaHandler);
-
-      container.bind<interfaces.Factory<Katana>>(swordFactoryId).toFactory<Katana>((theContext: interfaces.Context) =>
-          () =>
-              theContext.container.get<Katana>(katanaId));
-
-      const context = plan(new MetadataReader(), container, false, TargetTypeEnum.Variable, ninjaId);
-
-      const ninja = resolve<Ninja>(context);
-
-      expect(ninja instanceof Ninja).eql(true);
-      expect(ninja.katana instanceof Katana).eql(true);
-      expect(ninja.katana.handler instanceof KatanaHandler).eql(true);
-      expect(ninja.katana.blade instanceof KatanaBlade).eql(true);
-      expect(ninja.shuriken instanceof Shuriken).eql(true);
-
-  });
-
-  it("Should be able to resolve bindings with auto factory", () => {
-
-      const ninjaId = "Ninja";
-      const shurikenId = "Shuriken";
-      const katanaFactoryId = "Factory<Sword>";
-      const katanaId = "Katana";
-      const katanaHandlerId = "KatanaHandler";
-      const katanaBladeId = "KatanaBlade";
-
-      interface KatanaBlade {}
-
-      @injectable()
-      class KatanaBlade implements KatanaBlade {}
-
-      interface KatanaHandler {}
-
-      @injectable()
-      class KatanaHandler implements KatanaHandler {}
-
-      interface Sword {
-          handler: KatanaHandler;
-          blade: KatanaBlade;
-      }
-
-      type SwordFactory = () => Sword;
-
-      @injectable()
-      class Katana implements Sword {
-          public handler: KatanaHandler;
-          public blade: KatanaBlade;
-          public constructor(
-              @inject(katanaHandlerId) @targetName("handler") handler: KatanaHandler,
-              @inject(katanaBladeId) @targetName("blade") blade: KatanaBlade
-          ) {
-              this.handler = handler;
-              this.blade = blade;
-          }
-      }
-
-      interface Shuriken {}
-
-      @injectable()
-      class Shuriken implements Shuriken {}
-
-      interface Warrior {
-          katana: Katana;
-          shuriken: Shuriken;
-      }
-
-      @injectable()
-      class Ninja implements Warrior {
-          public katana: Katana;
-          public shuriken: Shuriken;
-          public constructor(
-              @inject(katanaFactoryId) @targetName("makeKatana") makeKatana: SwordFactory,
-              @inject(shurikenId) @targetName("shuriken") shuriken: Shuriken
-          ) {
-              this.katana = makeKatana(); // IMPORTANT!
-              this.shuriken = shuriken;
-          }
-      }
-
-      const container = new Container();
-      container.bind<Ninja>(ninjaId).to(Ninja);
-      container.bind<Shuriken>(shurikenId).to(Shuriken);
-      container.bind<Katana>(katanaId).to(Katana);
-      container.bind<KatanaBlade>(katanaBladeId).to(KatanaBlade);
-      container.bind<KatanaHandler>(katanaHandlerId).to(KatanaHandler);
-      container.bind<interfaces.Factory<Katana>>(katanaFactoryId).toAutoFactory<Katana>(katanaId);
 
       const context = plan(new MetadataReader(), container, false, TargetTypeEnum.Variable, ninjaId);
       const ninja = resolve<Ninja>(context);

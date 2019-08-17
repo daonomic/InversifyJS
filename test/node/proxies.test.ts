@@ -5,7 +5,7 @@ import { Container, inject, injectable } from "../../src/inversify";
 
 describe("InversifyJS", () => {
 
-    it("Should support the injection of proxied objects", () => {
+    it("Should support the injection of proxied objects", async () => {
 
         const weaponId = "Weapon";
         const warriorId = "Warrior";
@@ -50,7 +50,7 @@ describe("InversifyJS", () => {
             return katana;
         });
 
-        const ninja = container.get<Warrior>(warriorId);
+        const ninja = await container.get<Warrior>(warriorId);
         ninja.weapon.use();
 
         expect(log.length).eql(2);

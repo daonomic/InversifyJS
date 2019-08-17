@@ -3,7 +3,7 @@ import { Container, injectable } from "../../src/inversify";
 
 describe("Provider", () => {
 
-    it("Should support complex asynchronous initialization processes", (done) => {
+    it("Should support complex asynchronous initialization processes", async (done) => {
 
         @injectable()
         class Ninja {
@@ -38,8 +38,8 @@ describe("Provider", () => {
         container.bind<Ninja>("Ninja").to(Ninja).inSingletonScope();
         container.bind<NinjaMasterProvider>("Provider<NinjaMaster>").toProvider((context) =>
             () =>
-                new Promise<NinjaMaster>((resolve, reject) => {
-                    const ninja = context.container.get<Ninja>("Ninja");
+                new Promise<NinjaMaster>(async (resolve, reject) => {
+                    const ninja = await context.container.get<Ninja>("Ninja");
                     ninja.train().then((level) => {
                         if (level >= 20) {
                             resolve(new NinjaMaster());
@@ -49,7 +49,7 @@ describe("Provider", () => {
                     });
                 }));
 
-        const ninjaMasterProvider = container.get<NinjaMasterProvider>("Provider<NinjaMaster>");
+        const ninjaMasterProvider = await container.get<NinjaMasterProvider>("Provider<NinjaMaster>");
 
         // helper
         function valueOrDefault<T>(provider: () => Promise<T>, defaultValue: T) {
@@ -73,7 +73,7 @@ describe("Provider", () => {
 
     });
 
-    it("Should support custom arguments", (done) => {
+    it("Should support custom arguments", async (done) => {
 
         const container = new Container();
 
@@ -95,15 +95,15 @@ describe("Provider", () => {
         container.bind<SwordProvider>("SwordProvider").toProvider<Sword>((context) =>
             (material: string, damage: number) =>
                 new Promise<Sword>((resolve) => {
-                    setTimeout(() => {
-                        const katana = context.container.get<Sword>("Sword");
+                    setTimeout(async () => {
+                        const katana = await context.container.get<Sword>("Sword");
                         katana.material = material;
                         katana.damage = damage;
                         resolve(katana);
                     },         10);
                 }));
 
-        const katanaProvider = container.get<SwordProvider>("SwordProvider");
+        const katanaProvider = await container.get<SwordProvider>("SwordProvider");
 
         katanaProvider("gold", 100).then((powerfulGoldKatana) => {
 
@@ -120,7 +120,7 @@ describe("Provider", () => {
 
     });
 
-    it("Should support partial application of custom arguments", (done) => {
+    it("Should support partial application of custom arguments", async (done) => {
 
         const container = new Container();
 
@@ -143,15 +143,15 @@ describe("Provider", () => {
             (material: string) =>
                 (damage: number) =>
                     new Promise<Sword>((resolve) => {
-                        setTimeout(() => {
-                            const katana = context.container.get<Sword>("Sword");
+                        setTimeout(async () => {
+                            const katana = await context.container.get<Sword>("Sword");
                             katana.material = material;
                             katana.damage = damage;
                             resolve(katana);
                         },         10);
                     }));
 
-        const katanaProvider = container.get<SwordProvider>("SwordProvider");
+        const katanaProvider = await container.get<SwordProvider>("SwordProvider");
         const goldKatanaProvider = katanaProvider("gold");
 
         goldKatanaProvider(100).then((powerfulGoldKatana) => {
@@ -169,7 +169,7 @@ describe("Provider", () => {
 
     });
 
-    it("Should support the declaration of singletons", (done) => {
+    it("Should support the declaration of singletons", async (done) => {
 
         const container = new Container();
 
@@ -192,14 +192,14 @@ describe("Provider", () => {
         container.bind<WarriorProvider>("WarriorProvider").toProvider<Warrior>((context) =>
             (increaseLevel: number) =>
                 new Promise<Warrior>((resolve) => {
-                    setTimeout(() => {
-                        const warrior = context.container.get<Warrior>("Warrior"); // Get singleton!
+                    setTimeout(async () => {
+                        const warrior = await context.container.get<Warrior>("Warrior"); // Get singleton!
                         warrior.level += increaseLevel;
                         resolve(warrior);
                     },         100);
                 }));
 
-        const warriorProvider = container.get<WarriorProvider>("WarriorProvider");
+        const warriorProvider = await container.get<WarriorProvider>("WarriorProvider");
 
         warriorProvider(10).then((warrior) => {
 

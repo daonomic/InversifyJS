@@ -84,12 +84,6 @@ const _resolveRequest = (requestScope: interfaces.RequestScope) =>
                 binding.serviceIdentifier,
                 () => (binding.dynamicValue as (context: interfaces.Context) => any)(request.parentContext)
             );
-        } else if (binding.type === BindingTypeEnum.Factory && binding.factory !== null) {
-            result = invokeFactory(
-                "toFactory",
-                binding.serviceIdentifier,
-                () => (binding.factory as interfaces.FactoryCreator<any>)(request.parentContext)
-            );
         } else if (binding.type === BindingTypeEnum.Provider && binding.provider !== null) {
             result = invokeFactory(
                 "toProvider",

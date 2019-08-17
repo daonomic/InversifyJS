@@ -22,16 +22,13 @@ class Binding<T> implements interfaces.Binding<T> {
     public cache: T | null;
 
     // Cache used to allow BindingType.DynamicValue bindings
-    public dynamicValue: ((context: interfaces.Context) => T) | null;
+    public dynamicValue: ((context: interfaces.Context) => Promise<T>) | null;
 
     // The scope mode to be used
     public scope: interfaces.BindingScope;
 
     // The kind of binding
     public type: interfaces.BindingType;
-
-    // A factory method used in BindingType.Factory bindings
-    public factory: interfaces.FactoryCreator<T> | null;
 
     // An async factory method used in BindingType.Provider bindings
     public provider: interfaces.ProviderCreator<T> | null;
@@ -51,7 +48,6 @@ class Binding<T> implements interfaces.Binding<T> {
         this.constraint = (request: interfaces.Request) => true;
         this.implementationType = null;
         this.cache = null;
-        this.factory = null;
         this.provider = null;
         this.onActivation = null;
         this.dynamicValue = null;
@@ -64,7 +60,6 @@ class Binding<T> implements interfaces.Binding<T> {
         clone.dynamicValue = this.dynamicValue;
         clone.scope = this.scope;
         clone.type = this.type;
-        clone.factory = this.factory;
         clone.provider = this.provider;
         clone.constraint = this.constraint;
         clone.onActivation = this.onActivation;

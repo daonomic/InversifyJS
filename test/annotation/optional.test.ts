@@ -3,7 +3,7 @@ import { Container, inject, injectable, optional } from "../../src/inversify";
 
 describe("@optional", () => {
 
-  it("Should allow to flag dependencies as optional", () => {
+  it("Should allow to flag dependencies as optional", async () => {
 
       @injectable()
       class Katana {
@@ -41,21 +41,21 @@ describe("@optional", () => {
       container.bind<Katana>("Katana").to(Katana);
       container.bind<Ninja>("Ninja").to(Ninja);
 
-      let ninja =  container.get<Ninja>("Ninja");
+      let ninja = await container.get<Ninja>("Ninja");
       expect(ninja.name).to.eql("Ninja");
       expect(ninja.katana.name).to.eql("Katana");
       expect(ninja.shuriken).to.eql(undefined);
 
       container.bind<Shuriken>("Shuriken").to(Shuriken);
 
-      ninja =  container.get<Ninja>("Ninja");
+      ninja = await container.get<Ninja>("Ninja");
       expect(ninja.name).to.eql("Ninja");
       expect(ninja.katana.name).to.eql("Katana");
       expect(ninja.shuriken.name).to.eql("Shuriken");
 
   });
 
-  it("Should allow to set a default value for dependencies flagged as optional", () => {
+  it("Should allow to set a default value for dependencies flagged as optional", async() => {
 
       @injectable()
       class Katana {
@@ -93,14 +93,14 @@ describe("@optional", () => {
       container.bind<Katana>("Katana").to(Katana);
       container.bind<Ninja>("Ninja").to(Ninja);
 
-      let ninja =  container.get<Ninja>("Ninja");
+      let ninja = await container.get<Ninja>("Ninja");
       expect(ninja.name).to.eql("Ninja");
       expect(ninja.katana.name).to.eql("Katana");
       expect(ninja.shuriken.name).to.eql("DefaultShuriken");
 
       container.bind<Shuriken>("Shuriken").to(Shuriken);
 
-      ninja =  container.get<Ninja>("Ninja");
+      ninja = await container.get<Ninja>("Ninja");
       expect(ninja.name).to.eql("Ninja");
       expect(ninja.katana.name).to.eql("Katana");
       expect(ninja.shuriken.name).to.eql("Shuriken");

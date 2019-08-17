@@ -3,7 +3,7 @@ import { BindingScopeEnum, Container, injectable } from "../../src/inversify";
 
 describe("Issue 706", () => {
 
-    it("Should expose BindingScopeEnum as part of the public API", () => {
+    it("Should expose BindingScopeEnum as part of the public API", async () => {
 
         @injectable()
         class SomeClass {
@@ -23,8 +23,8 @@ describe("Issue 706", () => {
 
         container.bind<SomeClass>(TYPE.SomeClass).to(SomeClass);
 
-        const instanceOne = container.get<SomeClass>(TYPE.SomeClass);
-        const instanceTwo = container.get<SomeClass>(TYPE.SomeClass);
+        const instanceOne = await container.get<SomeClass>(TYPE.SomeClass);
+        const instanceTwo = await container.get<SomeClass>(TYPE.SomeClass);
 
         expect(instanceOne.time).to.eq(instanceTwo.time);
 

@@ -6,7 +6,7 @@ import { BindingWhenOnSyntax } from "./binding_when_on_syntax";
 
 class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
 
-    private _binding: interfaces.Binding<T>;
+    private readonly _binding: interfaces.Binding<T>;
 
     public constructor(binding: interfaces.Binding<T>) {
         this._binding = binding;
@@ -34,7 +34,7 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
         return new BindingWhenOnSyntax<T>(this._binding);
     }
 
-    public toDynamicValue(func: (context: interfaces.Context) => T): interfaces.BindingInWhenOnSyntax<T> {
+    public toDynamicValue(func: (context: interfaces.Context) => Promise<T>): interfaces.BindingInWhenOnSyntax<T> {
         this._binding.type = BindingTypeEnum.DynamicValue;
         this._binding.cache = null;
         this._binding.dynamicValue = func;
@@ -48,27 +48,12 @@ class BindingToSyntax<T> implements interfaces.BindingToSyntax<T> {
         return new BindingWhenOnSyntax<T>(this._binding);
     }
 
-    public toFactory<T2>(factory: interfaces.FactoryCreator<T2>): interfaces.BindingWhenOnSyntax<T> {
-        this._binding.type = BindingTypeEnum.Factory;
-        this._binding.factory = factory;
-        return new BindingWhenOnSyntax<T>(this._binding);
-    }
-
     public toFunction(func: T): interfaces.BindingWhenOnSyntax<T> {
         // toFunction is an alias of toConstantValue
         if (typeof func !== "function") { throw new Error(ERROR_MSGS.INVALID_FUNCTION_BINDING); }
         const bindingWhenOnSyntax = this.toConstantValue(func);
         this._binding.type = BindingTypeEnum.Function;
         return bindingWhenOnSyntax;
-    }
-
-    public toAutoFactory<T2>(serviceIdentifier: interfaces.ServiceIdentifier<T2>): interfaces.BindingWhenOnSyntax<T> {
-        this._binding.type = BindingTypeEnum.Factory;
-        this._binding.factory = (context) => {
-            const autofactory = () => context.container.get<T2>(serviceIdentifier);
-            return autofactory;
-        };
-        return new BindingWhenOnSyntax<T>(this._binding);
     }
 
     public toProvider<T2>(provider: interfaces.ProviderCreator<T2>): interfaces.BindingWhenOnSyntax<T> {
