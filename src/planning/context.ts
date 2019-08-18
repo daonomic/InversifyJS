@@ -4,12 +4,12 @@ import { id } from "../utils/id";
 class Context implements interfaces.Context {
 
     public id: number;
-    public container: interfaces.Container;
+    public container: interfaces.ContainerBase;
     public plan: interfaces.Plan;
     public currentRequest: interfaces.Request;
 
     public constructor(
-        container: interfaces.Container) {
+        container: interfaces.ContainerBase) {
         this.id = id();
         this.container = container;
     }

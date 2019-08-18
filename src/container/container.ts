@@ -9,18 +9,13 @@ import { resolve } from "../resolution/resolver";
 import { BindingToSyntax } from "../syntax/binding_to_syntax";
 import { id } from "../utils/id";
 import { getServiceIdentifierAsString } from "../utils/serialization";
+import {ContainerBase} from "./container_base";
 import { ContainerSnapshot } from "./container_snapshot";
 import { Lookup } from "./lookup";
 
-class Container implements interfaces.Container {
+class Container extends ContainerBase implements interfaces.Container {
 
-    public id: number;
     public parent: interfaces.Container | null;
-    public readonly options: interfaces.ContainerOptions;
-    private _middleware: interfaces.Next | null;
-    private _bindingDictionary: interfaces.Lookup<interfaces.Binding<any>>;
-    private _snapshots: interfaces.ContainerSnapshot[];
-    private _metadataReader: interfaces.MetadataReader;
 
     public static merge(container1: interfaces.Container, container2: interfaces.Container): interfaces.Container {
 
@@ -50,99 +45,8 @@ class Container implements interfaces.Container {
     }
 
     public constructor(containerOptions?: interfaces.ContainerOptions) {
-        const options = containerOptions || {};
-        if (typeof options !== "object") {
-            throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_MUST_BE_AN_OBJECT}`);
-        }
-
-        if (options.defaultScope === undefined) {
-            options.defaultScope = BindingScopeEnum.Transient;
-        } else if (
-            options.defaultScope !== BindingScopeEnum.Singleton &&
-            options.defaultScope !== BindingScopeEnum.Transient &&
-            options.defaultScope !== BindingScopeEnum.Request
-        ) {
-            throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_INVALID_DEFAULT_SCOPE}`);
-        }
-
-        if (options.autoBindInjectable === undefined) {
-            options.autoBindInjectable = false;
-        } else if (
-            typeof options.autoBindInjectable !== "boolean"
-        ) {
-            throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_INVALID_AUTO_BIND_INJECTABLE}`);
-        }
-
-        if (options.skipBaseClassChecks === undefined) {
-            options.skipBaseClassChecks = false;
-        } else if (
-            typeof options.skipBaseClassChecks !== "boolean"
-        ) {
-            throw new Error(`${ERROR_MSGS.CONTAINER_OPTIONS_INVALID_SKIP_BASE_CHECK}`);
-        }
-
-        this.options = {
-            autoBindInjectable: options.autoBindInjectable,
-            defaultScope: options.defaultScope,
-            skipBaseClassChecks: options.skipBaseClassChecks
-        };
-
-        this.id = id();
-        this._bindingDictionary = new Lookup<interfaces.Binding<any>>();
-        this._snapshots = [];
-        this._middleware = null;
+        super(containerOptions);
         this.parent = null;
-        this._metadataReader = new MetadataReader();
-    }
-
-    public load(...modules: interfaces.ContainerModule[]) {
-
-        const getHelpers = this._getContainerModuleHelpersFactory();
-
-        for (const currentModule of modules) {
-
-            const containerModuleHelpers = getHelpers(currentModule.id);
-
-            currentModule.registry(
-                containerModuleHelpers.bindFunction,
-                containerModuleHelpers.unbindFunction,
-                containerModuleHelpers.isboundFunction,
-                containerModuleHelpers.rebindFunction
-            );
-
-        }
-
-    }
-
-    public async loadAsync(...modules: interfaces.AsyncContainerModule[]) {
-
-        const getHelpers = this._getContainerModuleHelpersFactory();
-
-        for (const currentModule of modules) {
-
-            const containerModuleHelpers = getHelpers(currentModule.id);
-
-            await currentModule.registry(
-                containerModuleHelpers.bindFunction,
-                containerModuleHelpers.unbindFunction,
-                containerModuleHelpers.isboundFunction,
-                containerModuleHelpers.rebindFunction
-            );
-
-        }
-
-    }
-
-    public unload(...modules: interfaces.ContainerModule[]): void {
-
-        const conditionFactory = (expected: any) => (item: interfaces.Binding<any>): boolean =>
-            item.moduleId === expected;
-
-        modules.forEach((module) => {
-            const condition = conditionFactory(module.id);
-            this._bindingDictionary.removeByCondition(condition);
-        });
-
     }
 
     // Registers a type binding
@@ -158,23 +62,9 @@ class Container implements interfaces.Container {
         return this.bind(serviceIdentifier);
     }
 
-    // Removes a type binding from the registry by its key
-    public unbind(serviceIdentifier: interfaces.ServiceIdentifier<any>): void {
-        try {
-            this._bindingDictionary.remove(serviceIdentifier);
-        } catch (e) {
-            throw new Error(`${ERROR_MSGS.CANNOT_UNBIND} ${getServiceIdentifierAsString(serviceIdentifier)}`);
-        }
-    }
-
-    // Removes all the type bindings from the registry
-    public unbindAll(): void {
-        this._bindingDictionary = new Lookup<Binding<any>>();
-    }
-
     // Allows to check if there are bindings available for serviceIdentifier
     public isBound(serviceIdentifier: interfaces.ServiceIdentifier<any>): boolean {
-        let bound = this._bindingDictionary.hasKey(serviceIdentifier);
+        let bound = super.isBound(serviceIdentifier);
         if (!bound && this.parent) {
             bound = this.parent.isBound(serviceIdentifier);
         }
@@ -187,14 +77,7 @@ class Container implements interfaces.Container {
 
     // Check if a binding with a complex constraint is available without throwing a error. Ancestors are also verified.
     public isBoundTagged(serviceIdentifier: interfaces.ServiceIdentifier<any>, key: string | number | symbol, value: any): boolean {
-        let bound = false;
-
-        // verify if there are bindings available for serviceIdentifier on current binding dictionary
-        if (this._bindingDictionary.hasKey(serviceIdentifier)) {
-            const bindings = this._bindingDictionary.get(serviceIdentifier);
-            const request = createMockRequest(this, serviceIdentifier, key, value);
-            bound = bindings.some((b) => b.constraint(request));
-        }
+        let bound = super.isBoundTagged(serviceIdentifier, key, value);
 
         // verify if there is a parent container that could solve the request
         if (!bound && this.parent) {
@@ -269,7 +152,7 @@ class Container implements interfaces.Container {
         return tempContainer.get<T>(constructorFunction);
     }
 
-    private _getContainerModuleHelpersFactory() {
+    private _getContainerModuleHelpersFactory(): (mId: number) => { unbindFunction: (serviceIdentifier: interfaces.ServiceIdentifier<any>) => void; isboundFunction: (serviceIdentifier: interfaces.ServiceIdentifier<any>) => any; bindFunction: (serviceIdentifier: interfaces.ServiceIdentifier<any>) => any; rebindFunction: (serviceIdentifier: interfaces.ServiceIdentifier<any>) => any } {
 
         const setModuleId = (bindingToSyntax: any, moduleId: number) => {
             bindingToSyntax._binding.moduleId = moduleId;

@@ -1,21 +1,21 @@
-import { BindingCount } from "../bindings/binding_count";
+import {BindingCount} from "../bindings/binding_count";
 import * as ERROR_MSGS from "../constants/error_msgs";
-import { BindingTypeEnum, TargetTypeEnum } from "../constants/literal_types";
+import {BindingTypeEnum, TargetTypeEnum} from "../constants/literal_types";
 import * as METADATA_KEY from "../constants/metadata_keys";
-import { interfaces } from "../interfaces/interfaces";
-import { isStackOverflowExeption } from "../utils/exceptions";
+import {interfaces} from "../interfaces/interfaces";
+import {isStackOverflowExeption} from "../utils/exceptions";
 import {
     circularDependencyToException,
     getServiceIdentifierAsString,
     listMetadataForTarget,
     listRegisteredBindingsForServiceIdentifier
 } from "../utils/serialization";
-import { Context } from "./context";
-import { Metadata } from "./metadata";
-import { Plan } from "./plan";
-import { getBaseClassDependencyCount, getDependencies, getFunctionName } from "./reflection_utils";
-import { Request } from "./request";
-import { Target } from "./target";
+import {Context} from "./context";
+import {Metadata} from "./metadata";
+import {Plan} from "./plan";
+import {getBaseClassDependencyCount, getDependencies, getFunctionName} from "./reflection_utils";
+import {Request} from "./request";
+import {Target} from "./target";
 
 function getBindingDictionary (cntnr: any): interfaces.Lookup<interfaces.Binding<any>> {
     return cntnr._bindingDictionary;
@@ -256,7 +256,7 @@ function plan(
 }
 
 function createMockRequest(
-    container: interfaces.Container,
+    container: interfaces.ContainerBase,
     serviceIdentifier: interfaces.ServiceIdentifier<any>,
     key: string | number | symbol,
     value: any
@@ -264,8 +264,7 @@ function createMockRequest(
 
     const target = new Target(TargetTypeEnum.Variable, "", serviceIdentifier, new Metadata(key, value));
     const context = new Context(container);
-    const request = new Request(serviceIdentifier, context, null, [], target);
-    return request;
+    return new Request(serviceIdentifier, context, null, [], target);
 }
 
 export { plan, createMockRequest, getBindingDictionary };
